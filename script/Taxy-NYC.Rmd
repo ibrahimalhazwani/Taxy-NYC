@@ -16,7 +16,16 @@ library(dplyr)
 ```
 
 ```{r}
-taxy_df <- read.csv('data/yellow_tripdata_2019-01.csv')
-map_nyc <- read_sf('data/taxi_zones.shp')
+january_df <- read.csv('../data/yellow_tripdata_2019-01.csv')
+map_nyc <- read_sf('../data/taxi_zones.shp')
+```
+
+```{r}
+january_df <- january_df[january_df$passenger_count != 0,]
+
+ggplot()+
+  geom_sf(
+    data= map_nyc
+    )
 ```
 
