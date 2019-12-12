@@ -1,0 +1,22 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages('tidyverse')
+install.packages('sf')
+install.packages('dplyr')
+```
+
+```{r}
+library(tidyverse)
+library(sf)
+library(dplyr)
+```
+
+```{r}
+taxy_df <- read.csv('data/yellow_tripdata_2019-01.csv')
+map_nyc <- read_sf('data/taxi_zones.shp')
+```
+
