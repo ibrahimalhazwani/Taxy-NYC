@@ -8,24 +8,30 @@ install.packages('tidyverse')
 install.packages('sf')
 install.packages('dplyr')
 ```
-
+Load the library
 ```{r}
 library(tidyverse)
 library(sf)
 library(dplyr)
 ```
-
+Load the data
 ```{r}
 january_df <- read.csv('../data/yellow_tripdata_2019-01.csv')
 map_nyc <- read_sf('../data/taxi_zones.shp')
 ```
-
+Edit the january DF keeping only the column needed for the map
 ```{r}
-january_df <- january_df[january_df$passenger_count != 0,]
-
+janauary_df_reduce <- subset(january_df, select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,DOLocationID))
+```
+Plot the NYC map
+```{r}
 ggplot()+
   geom_sf(
-    data= map_nyc
+    data = map_nyc
     )
+```
+```{r}
+
+}
 ```
 
