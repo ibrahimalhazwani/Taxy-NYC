@@ -8,7 +8,7 @@ install.packages('tidyverse')
 install.packages('sf')
 install.packages('dplyr')
 ```
-Load the library
+Load the libraries
 ```{r}
 library(tidyverse)
 library(sf)
@@ -19,19 +19,28 @@ Load the data
 january_df <- read.csv('../data/yellow_tripdata_2019-01.csv')
 map_nyc <- read_sf('../data/taxi_zones.shp')
 ```
-Edit the january DF keeping only the column needed for the map
+Edit the january DF keeping only the column needed for the map.
 ```{r}
 janauary_df_reduce <- subset(january_df, select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,DOLocationID))
+map_nyc$PULocationID <- map_nyc$LocationID
+map_nyc$DOLocationID <- map_nyc$LocationID
+january_nyc_PUL <- left_join(janauary_df_reduce,map_nyc,"PULocationID")
+january_nyc_PUL <- subset(january_nyc_PUL, select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry))
+colnames(january_nyc)[4] <- "DOLocationID"
+january_nyc_DOL <- left_join(janauary_df_reduce,map_nyc,"DOLocationID")
+january_nyc_DOL <- subset(january_nyc_DOL, select = c(tpep_pickup_datetime,tpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry))
 ```
 Plot the NYC map
 ```{r}
 ggplot()+
   geom_sf(
     data = map_nyc
-    )
+    ) +
+  xlab("Longitude") + ylab("Latitude")+
+  ggtitle("NYC map")
 ```
+
 ```{r}
 
-}
 ```
 
