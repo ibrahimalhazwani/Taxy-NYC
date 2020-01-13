@@ -1,6 +1,8 @@
 ---
-title: "R Notebook"
+title: "Analysis of the taxy trasportation in NYC on January 2019"
 output: html_notebook
+editor_options: 
+  chunk_output_type: console
 ---
 
 Install the libraries usefull for the project.
@@ -9,6 +11,7 @@ install.packages('tidyverse')
 install.packages('sf')
 install.packages('dplyr')
 install.packages('ggdark')
+install.packages('networkD3')
 ```
 
 Load the libraries for running the project.
@@ -17,7 +20,7 @@ library(tidyverse)
 library(sf)
 library(dplyr)
 library(ggdark)
-library(cowplot)
+library(networkD3)
 ```
 
 Load the data, data avaiable at the website [LINK]
@@ -30,7 +33,7 @@ map_nyc <- read_sf("../data/taxi_zones.shp")
 
 # Data preprocessing
 
-Change the column name of the map dataframe so later will be possible to make the left join.
+Create two new column in the map dataframe so later will be possible to make the left join.
 ```{r}
 map_nyc$PULocationID <- map_nyc$LocationID
 map_nyc$DOLocationID <- map_nyc$LocationID
@@ -39,14 +42,15 @@ map_nyc$DOLocationID <- map_nyc$LocationID
 Edit the yellow cab dataframe in order to reduce the dimension and keep only the column needed for creating the map.
 ```{r}
 yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 753625), ] %>% 
-  subset(select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,DOLocationID, passenger_count)) 
+  subset(select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,DOLocationID, passenger_count)) %>%
+  drop_na()
 
 yellow_nyc_PUL <- left_join(yellow_df_sample,map_nyc,"PULocationID") %>%
   subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
 
 yellow_nyc_DOL <- left_join(yellow_df_sample,map_nyc,"DOLocationID") %>%
-  subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry) )%>%
+  subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
 ```
 
@@ -61,7 +65,6 @@ green_nyc_PUL <- left_join(green_df,map_nyc,"PULocationID") %>%
 green_nyc_DOL <- left_join(green_df,map_nyc,"DOLocationID") %>%
   subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
-
 ```
 
 Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
@@ -78,9 +81,38 @@ fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
   drop_na()
 ```
 
+# Data Visualization
+
 Plot the NYC map
 ```{r}
-ggplot()+
+ggplot() +
   geom_sf (data = map_nyc)
+```
+
+Script for creating the Sankey Diagram
+```{r}
+PULocation <- unique(as.character(yellow_df_sample$PULocationID))
+DOLocation <- unique(as.character(yellow_df_sample$DOLocationID))
+values <- group_by(yellow_df_sample, PULocationID) %>%
+                       count()
+
+sq <- seq(min(length(PULocation), length(DOLocation)))
+links <- data.frame(source = PULocation[sq],
+                    target = DOLocation[sq],
+                    value = values)
+
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+  as.character(links$target)) %>% unique()
+)
+
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+
+p <- sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value.n", NodeID = "name", 
+              sinksRight=FALSE)
+p
 ```
 
