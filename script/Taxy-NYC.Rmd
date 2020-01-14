@@ -39,7 +39,6 @@ map_nyc$PULocationID <- map_nyc$LocationID
 map_nyc$DOLocationID <- map_nyc$LocationID
 ```
 
-
 ```{r}
 dictionary_zone <- subset(map_nyc, select = c(zone, PULocationID, DOLocationID)) %>% 
   drop_na()
@@ -47,16 +46,20 @@ dictionary_zone <- subset(map_nyc, select = c(zone, PULocationID, DOLocationID))
  
 Edit the yellow cab dataframe in order to reduce the dimension and keep only the column needed for creating the map.
 ```{r}
-yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 743219), ] %>% 
+yellow_df_sample_sankey <- yellow_df[sample(nrow(yellow_df), 743219), ] %>% 
   subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
 
-yellow_nyc_PUL <- left_join(yellow_df_sample,map_nyc,"PULocationID") %>%
+yellow_df_sample_taxy <- yellow_df[sample(nrow(yellow_df), 3219), ] %>% 
+  subset(select = c(PULocationID,DOLocationID)) %>%
+  drop_na()
+
+yellow_nyc_PUL <- left_join(yellow_df_sample_taxy,map_nyc,"PULocationID") %>%
   subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
 
-yellow_nyc_DOL <- left_join(yellow_df_sample,map_nyc,"DOLocationID") %>%
-  subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
+yellow_nyc_DOL <- left_join(yellow_df_sample_taxy,map_nyc,"DOLocationID") %>%
+  subset(select = c(DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
 ```
 
@@ -91,6 +94,9 @@ fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
 
 Plot the NYC map
 ```{r}
+df <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
+  summarize(Count=n())
+
 ggplot() +
   geom_sf (data = map_nyc) +
   geom_sf (data = yellow_nyc_PUL, mapping = aes(fill = PULocationID, geometry = geometry))
@@ -98,12 +104,12 @@ ggplot() +
 
 Script for creating the Sankey Diagram
 ```{r}
-final_table <- yellow_df_sample %>% group_by(PULocationID,DOLocationID) %>%
+final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
       summarize(Count = n())
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 50)
+final_table_head <- head(final_table_ordered, 85)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
@@ -126,8 +132,6 @@ p <- sankeyNetwork(Links = links, Nodes = nodes,
               Value = "value", NodeID = "name", 
               sinksRight=FALSE, LinkGroup="group", NodeGroup="group")
 p
-
-#matrice di adiacenza -> heatmap
 ```
 
 
