@@ -25,10 +25,10 @@ library(networkD3)
 
 Load the data, data avaiable at the website [LINK]
 ```{r}
-yellow_df <- read_csv("../data/yellow_tripdata_2019-01.csv")
-green_df <- read_csv("../data/green_tripdata_2019-01.csv")
-fhv_df <- read_csv("../data/fhv_tripdata_2019-01.csv")
-map_nyc <- read_sf("../data/taxi_zones.shp")
+yellow_df <- read_csv("data/yellow_tripdata_2019-01.csv")
+green_df <- read_csv("data/green_tripdata_2019-01.csv")
+fhv_df <- read_csv("data/fhv_tripdata_2019-01.csv")
+map_nyc <- read_sf("data/taxi_zones.shp")
 ```
 
 # Data preprocessing
@@ -41,13 +41,12 @@ map_nyc$DOLocationID <- map_nyc$LocationID
 
 Edit the yellow cab dataframe in order to reduce the dimension and keep only the column needed for creating the map.
 ```{r}
-yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 753625), ] %>% 
-  subset(select = c(tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,DOLocationID, passenger_count)) %>%
+yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 600), ] %>% 
+  subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
 
-yellow_nyc_PUL <- left_join(yellow_df_sample,map_nyc,"PULocationID") %>%
-  subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
+yellow_nyc_PUL <- right_join(yellow_df_sample,map_nyc,"PULocationID") %>%
+  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry))
 
 yellow_nyc_DOL <- left_join(yellow_df_sample,map_nyc,"DOLocationID") %>%
   subset(select = c(passenger_count,tpep_pickup_datetime,tpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
@@ -86,33 +85,53 @@ fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
 Plot the NYC map
 ```{r}
 ggplot() +
-  geom_sf (data = map_nyc)
+  geom_sf (data = yellow_nyc_PUL, mapping = aes(fill = PULocationID, geometry = geometry))
 ```
 
 Script for creating the Sankey Diagram
 ```{r}
-PULocation <- unique(as.character(yellow_df_sample$PULocationID))
-DOLocation <- unique(as.character(yellow_df_sample$DOLocationID))
-values <- group_by(yellow_df_sample, PULocationID) %>%
-                       count()
+final_table <- yellow_df_sample %>% group_by(PULocationID,DOLocationID) %>%
+      summarize(Count = n())
 
-sq <- seq(min(length(PULocation), length(DOLocation)))
-links <- data.frame(source = PULocation[sq],
-                    target = DOLocation[sq],
-                    value = values)
+links <- data.frame(source = final_table$PULocationID,
+                    target = final_table$DOLocationID,
+                    value = final_table$Count)
 
-nodes <- data.frame(
-  name=c(as.character(links$source), 
-  as.character(links$target)) %>% unique()
-)
+nodes <- data.frame(name=c(as.character(links$source), as.character(links$target))) %>% 
+  distinct()
 
 links$IDsource <- match(links$source, nodes$name)-1 
 links$IDtarget <- match(links$target, nodes$name)-1
 
+# aggiungere un suffisso per distignure target e source
+
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
-              Value = "value.n", NodeID = "name", 
+              Value = "value", NodeID = "name", 
               sinksRight=FALSE)
 p
+
+#matrice di adiacenza -> heatmap
+```
+
+```{r}
+data <- read.table("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/13_AdjacencyDirectedWeighted.csv", header=TRUE)
+
+data_long <- data %>%
+  rownames_to_column %>%
+  gather(key = 'key', value = 'value', -rowname) %>%
+  filter(value > 0)
+colnames(data_long) <- c("source", "target", "value")
+data_long$target <- paste(data_long$target, " ", sep="")
+
+nodes2 <- data.frame(name=c(as.character(data_long$source), as.character(data_long$target)) %>% unique())
+
+data_long$IDsource=match(data_long$source, nodes2$name)-1 
+data_long$IDtarget=match(data_long$target, nodes2$name)-1
+
+sankeyNetwork(Links = data_long, Nodes = nodes,
+                     Source = "IDsource", Target = "IDtarget",
+                     Value = "value", NodeID = "name", 
+                     sinksRight=FALSE, nodeWidth=40, fontSize=13, nodePadding=20)
 ```
 
