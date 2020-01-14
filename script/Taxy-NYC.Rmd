@@ -47,7 +47,7 @@ dictionary_zone <- subset(map_nyc, select = c(zone, PULocationID, DOLocationID))
  
 Edit the yellow cab dataframe in order to reduce the dimension and keep only the column needed for creating the map.
 ```{r}
-yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 100), ] %>% 
+yellow_df_sample <- yellow_df[sample(nrow(yellow_df), 743219), ] %>% 
   subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
 
@@ -101,9 +101,13 @@ Script for creating the Sankey Diagram
 final_table <- yellow_df_sample %>% group_by(PULocationID,DOLocationID) %>%
       summarize(Count = n())
 
-links <- data.frame(source = final_table$PULocationID,
-                    target = final_table$DOLocationID,
-                    value = final_table$Count)
+final_table_ordered <- final_table[with(final_table, order(-Count)),]
+
+final_table_head <- head(final_table_ordered, 50)
+
+links <- data.frame(source = final_table_head$PULocationID,
+                    target = final_table_head$DOLocationID,
+                    value = final_table_head$Count)
 
 links$source <- paste0(links$source,'_source')
 links$target <- paste0(links$target,'_target')
@@ -114,11 +118,13 @@ nodes <- data.frame(name=c(as.character(links$source), as.character(links$target
 links$IDsource <- match(links$source, nodes$name)-1 
 links$IDtarget <- match(links$target, nodes$name)-1
 
+links$group <- as.factor(links$source)
+nodes$group <- as.factor(nodes$name)
 
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
               Value = "value", NodeID = "name", 
-              sinksRight=FALSE)
+              sinksRight=FALSE, LinkGroup="group", NodeGroup="group")
 p
 
 #matrice di adiacenza -> heatmap
