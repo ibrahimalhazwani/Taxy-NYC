@@ -108,12 +108,15 @@ fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
 
 Plot the NYC map
 ```{r}
-df <- yellow_nyc_PUL %>% group_by(PULocationID, geometry) %>%
+df <- yellow_nyc_PUL %>% group_by(PULocationID, zone) %>%
   summarize(Count=n())
+
+df <- left_join(df,map_nyc, 'PULocationID') %>%
+  subset(select = c(PULocationID, Count,geometry))
 
 ggplot() +
   geom_sf (data = map_nyc) +
-  geom_sf (data = df, mapping = aes(fill = df$Count, geometry = geometry))
+  geom_sf (data = df, mapping = aes(fill = Count, geometry = geometry))
 ```
 
 Script for creating the Sankey Diagram
