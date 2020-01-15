@@ -50,6 +50,9 @@ yellow_df_sample_sankey <- yellow_df[sample(nrow(yellow_df), 743219), ] %>%
   subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
 
+yellow_df_sample_sankey$PULocationZone <- NA
+yellow_df_sample_sankey$DOLocationZone <- NA
+
 yellow_df_sample_taxy <- yellow_df[sample(nrow(yellow_df), 3219), ] %>% 
   subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
@@ -61,6 +64,17 @@ yellow_nyc_PUL <- left_join(yellow_df_sample_taxy,map_nyc,"PULocationID") %>%
 yellow_nyc_DOL <- left_join(yellow_df_sample_taxy,map_nyc,"DOLocationID") %>%
   subset(select = c(DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
   drop_na()
+```
+
+MATTEO HELP ME!
+```{r}
+for (item1 in yellow_df_sample_sankey$PULocationID){
+  for (item2 in dictionary_zone$PULocationID){
+    if (item1 == item2){
+      yellow_df_sample_sankey$PULocationZone <- dictionary_zone$zone
+    }
+  }
+}
 ```
 
 Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
@@ -94,12 +108,12 @@ fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
 
 Plot the NYC map
 ```{r}
-df <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
+df <- yellow_nyc_PUL %>% group_by(PULocationID, geometry) %>%
   summarize(Count=n())
 
 ggplot() +
   geom_sf (data = map_nyc) +
-  geom_sf (data = yellow_nyc_PUL, mapping = aes(fill = PULocationID, geometry = geometry))
+  geom_sf (data = df, mapping = aes(fill = df$Count, geometry = geometry))
 ```
 
 Script for creating the Sankey Diagram
@@ -109,7 +123,7 @@ final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 85)
+final_table_head <- head(final_table_ordered, 50)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
