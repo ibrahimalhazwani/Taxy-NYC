@@ -380,22 +380,24 @@ ggplot() +
 ```
 
 Script for creating the Sankey Diagram
+
 ```{r}
 final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
       summarize(Count = n())
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered,55)
+final_table_head <- head(final_table_ordered, 100)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
-                    value = final_table_head$Count) %>%
-                    mutate(source = recode(source, !!!names),
-                    target = recode(target, !!!names))
+                    value = final_table_head$Count)
 
-links$source <- paste0(links$source,'_source')
-links$target <- paste0(links$target,'_target')
+links <- links %>% mutate(source = recode(source, !!!names),
+                          target = recode(target, !!!names))
+
+links$source <- paste0(links$source,'_s')
+links$target <- paste0(links$target,'_t')
 
 nodes <- data.frame(name=c(as.character(links$source), as.character(links$target))) %>% 
   distinct()
@@ -410,6 +412,7 @@ p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
               Value = "value", NodeID = "name", 
               sinksRight=FALSE, LinkGroup="group", NodeGroup="group")
+
 p
 ```
 
