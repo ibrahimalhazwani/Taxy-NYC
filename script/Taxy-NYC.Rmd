@@ -39,19 +39,11 @@ map_nyc$PULocationID <- map_nyc$LocationID
 map_nyc$DOLocationID <- map_nyc$LocationID
 ```
 
-```{r}
-dictionary_zone <- subset(map_nyc, select = c(zone, PULocationID, DOLocationID)) %>% 
-  drop_na()
-```
- 
 Edit the yellow cab dataframe in order to reduce the dimension and keep only the column needed for creating the map.
 ```{r}
 yellow_df_sample_sankey <- yellow_df[sample(nrow(yellow_df), 743219), ] %>% 
   subset(select = c(PULocationID,DOLocationID)) %>%
   drop_na()
-
-#yellow_df_sample_sankey$PULocationZone <- NA
-#yellow_df_sample_sankey$DOLocationZone <- NA
 
 yellow_df_sample_taxy <- yellow_df[sample(nrow(yellow_df), 3219), ] %>% 
   subset(select = c(PULocationID,DOLocationID)) %>%
@@ -66,6 +58,78 @@ yellow_nyc_DOL <- left_join(yellow_df_sample_taxy,map_nyc,"DOLocationID") %>%
   drop_na()
 ```
 
+Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
+```{r}
+green_df_sample_taxy <- green_df[sample(nrow(green_df), 3219), ] %>%
+  subset(select = c(PULocationID,DOLocationID)) 
+
+green_nyc_PUL <- left_join(green_df_sample_taxy,map_nyc,"PULocationID") %>%
+  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+
+green_nyc_DOL <- left_join(green_df,map_nyc,"DOLocationID") %>%
+  subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+```
+
+Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
+```{r}
+fhv_df <- drop_na(fhv_df)
+fhv_sample <- fhv_df[sample(nrow(fhv_df), 743219), ]
+
+fhv_nyc_PUL <- left_join(fhv_sample, map_nyc, "PULocationID") %>%
+  subset(select = c(pickup_datetime,dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+
+fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
+  subset(select = c(pickup_datetime,dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+```
+
+# Data Visualization
+
+Plot the NYC map - yellow taxy PUL
+```{r}
+yellow_PUL_sample_taxy_map <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
+  summarize(count=n())
+
+yellow_taxy_PUL_map <- left_join(yellow_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
+  subset(select = c(PULocationID, count, geometry))
+
+ggplot() +
+  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = yellow_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
+  scale_fill_viridis_c()
+```
+
+Plot the NYC map - green taxy PUL
+```{r}
+green_PUL_sample_taxy_map <- green_nyc_PUL %>% group_by(PULocationID) %>%
+  summarize(count=n())
+
+green_taxy_PUL_map <- left_join(green_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
+  subset(select = c(PULocationID, count, geometry))
+
+ggplot() +
+  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = green_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
+  scale_fill_viridis_c()
+```
+
+```{r}
+yellow_DOL_sample_taxy_map <- yellow_nyc_DOL %>% group_by(DOLocationID) %>%
+  summarize(count=n())
+
+yellow_taxy_DOL_map <- left_join(yellow_DOL_sample_taxy_map,map_nyc, 'DOLocationID') %>%
+  subset(select = c(DOLocationID, count, geometry))
+
+ggplot() +
+  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = yellow_taxy_DOL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
+  scale_fill_viridis_c()
+```
+
+Script for creating the Sankey Diagram
 
 ```{r}
 names <- c(
@@ -336,50 +400,6 @@ names <- c(
 )
 ```
 
-Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
-```{r}
-green_df <- subset(green_df, select = c(lpep_pickup_datetime,lpep_dropoff_datetime,PULocationID,DOLocationID, passenger_count)) 
-
-green_nyc_PUL <- left_join(green_df,map_nyc,"PULocationID") %>%
-  subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-
-green_nyc_DOL <- left_join(green_df,map_nyc,"DOLocationID") %>%
-  subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
-```{r}
-fhv_df <- drop_na(fhv_df)
-fhv_sample <- fhv_df[sample(nrow(fhv_df), 743219), ]
-
-fhv_nyc_PUL <- left_join(fhv_sample, map_nyc, "PULocationID") %>%
-  subset(select = c(pickup_datetime,dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-
-fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
-  subset(select = c(pickup_datetime,dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-# Data Visualization
-
-Plot the NYC map
-```{r}
-yellow_df_sample_taxy_map <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
-  summarize(count=n())
-
-yellow_df_sample_taxy_map <- left_join(yellow_df_sample_taxy_map,map_nyc, 'PULocationID') %>%
-  subset(select = c(PULocationID, count, geometry))
-
-ggplot() +
-  geom_sf (data = map_nyc, size = 0.03) +
-  geom_sf (data = yellow_df_sample_taxy_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_viridis_c()
-```
-
-Script for creating the Sankey Diagram
 
 ```{r}
 final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
