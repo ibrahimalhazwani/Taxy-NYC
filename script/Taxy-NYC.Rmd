@@ -1,11 +1,19 @@
 ---
-title: "Analysis of the taxy trasportation in NYC on January 2019"
+title: "Analysis of the yellow taxy trasportation in NYC on January 2019"
 output: html_notebook
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
-Install the libraries usefull for the project.
+## Introduction
+
+The scope of this project is to analyse how the New York City citizen have moved using the yellow taxy during the month of January 2019 and which were the most commond zone where people get on a taxi or get off.  
+The data I have used are avaiable for free from the NYC Govermnet website at the following link: https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+
+## Getting ready  
+
+First we need to install the libraries that are we going to use for making the analysis and the visualization using the command *install.packages('name_of_the_library')*.
+
 ```{r}
 install.packages('tidyverse')
 install.packages('sf')
@@ -14,7 +22,9 @@ install.packages('ggdark')
 install.packages('networkD3')
 ```
 
-Load the libraries for running the project.
+Once installed we need to load it using the command *library('name_of_the_library')*.  
+In particular we are going to use the t
+
 ```{r}
 library(tidyverse)
 library(sf)
@@ -23,15 +33,13 @@ library(ggdark)
 library(networkD3)
 ```
 
-Load the data, data avaiable at the website [LINK]
-```{r}
-yellow_df <- read_csv("data/yellow_tripdata_2019-01.csv")
-green_df <- read_csv("data/green_tripdata_2019-01.csv")
-fhv_df <- read_csv("data/fhv_tripdata_2019-01.csv")
-map_nyc <- read_sf("data/taxi_zones.shp")
-```
+## Data preprocessing
 
-# Data preprocessing
+
+```{r}
+yellow_df <- read_csv("../data/yellow_tripdata_2019-01.csv")
+map_nyc <- read_sf("../data/taxi_zones.shp")
+```
 
 Create two new column in the map dataframe so later will be possible to make the left join.
 ```{r}
@@ -58,35 +66,7 @@ yellow_nyc_DOL <- left_join(yellow_df_sample_taxy,map_nyc,"DOLocationID") %>%
   drop_na()
 ```
 
-Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
-```{r}
-green_df_sample_taxy <- green_df[sample(nrow(green_df), 3219), ] %>%
-  subset(select = c(PULocationID,DOLocationID)) 
-
-green_nyc_PUL <- left_join(green_df_sample_taxy,map_nyc,"PULocationID") %>%
-  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-
-green_nyc_DOL <- left_join(green_df,map_nyc,"DOLocationID") %>%
-  subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
-```{r}
-fhv_df <- drop_na(fhv_df)
-fhv_sample <- fhv_df[sample(nrow(fhv_df), 743219), ]
-
-fhv_nyc_PUL <- left_join(fhv_sample, map_nyc, "PULocationID") %>%
-  subset(select = c(pickup_datetime,dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-
-fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
-  subset(select = c(pickup_datetime,dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-# Data Visualization
+## Data Visualization
 
 Plot the NYC map - yellow taxy PUL
 ```{r}
@@ -96,26 +76,16 @@ yellow_PUL_sample_taxy_map <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
 yellow_taxy_PUL_map <- left_join(yellow_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
   subset(select = c(PULocationID, count, geometry))
 
-ggplot() +
+c <- ggplot() +
   geom_sf (data = map_nyc, size = 0.03) +
   geom_sf (data = yellow_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+  labs(title = 'Which are the zone where yellow taxy are taken most?')
+
+c + dark_mode()
 ```
 
-Plot the NYC map - green taxy PUL
-```{r}
-green_PUL_sample_taxy_map <- green_nyc_PUL %>% group_by(PULocationID) %>%
-  summarize(count=n())
-
-green_taxy_PUL_map <- left_join(green_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
-  subset(select = c(PULocationID, count, geometry))
-
-ggplot() +
-  geom_sf (data = map_nyc, size = 0.03) +
-  geom_sf (data = green_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_viridis_c()
-```
-
+Plot the NYC map - yellow taxy DOL
 ```{r}
 yellow_DOL_sample_taxy_map <- yellow_nyc_DOL %>% group_by(DOLocationID) %>%
   summarize(count=n())
@@ -123,14 +93,16 @@ yellow_DOL_sample_taxy_map <- yellow_nyc_DOL %>% group_by(DOLocationID) %>%
 yellow_taxy_DOL_map <- left_join(yellow_DOL_sample_taxy_map,map_nyc, 'DOLocationID') %>%
   subset(select = c(DOLocationID, count, geometry))
 
-ggplot() +
+d <- ggplot() +
   geom_sf (data = map_nyc, size = 0.03) +
   geom_sf (data = yellow_taxy_DOL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_viridis_c()
+  scale_fill_viridis_c() +
+  labs(title = 'Which are the zone where people got off the taxi the most?')
+
+d + dark_mode()
 ```
 
 Script for creating the Sankey Diagram
-
 ```{r}
 names <- c(
   `1` <- "Newark Airport",
@@ -398,8 +370,7 @@ names <- c(
   `263` <- "Yorkville East",
   `264` <- "Yorkville West"
 )
-```
-
+``` 
 
 ```{r}
 final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
@@ -407,11 +378,11 @@ final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 100)
+final_table_head <- head(final_table_ordered, 50)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
-                    value = final_table_head$Count)
+                    value = final_table_head$Count) 
 
 links <- links %>% mutate(source = recode(source, !!!names),
                           target = recode(target, !!!names))
@@ -430,10 +401,72 @@ nodes$group <- as.factor(nodes$name)
 
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name", 
-              sinksRight=FALSE, LinkGroup="group", NodeGroup="group")
-
+              Value = "value", NodeID = "name", iterations = 30,
+              sinksRight=TRUE, LinkGroup="group", NodeGroup="group", units = 'time', 
+              fontSize = 15)
 p
+
+onRender(p,
+  '
+  function(el,x) {
+    d3.select(el)
+      .selectAll(".node text")
+      .attr("x", x.options.nodeWidth - 18)
+      .attr("text-anchor", "end");
+      .interpolateTurbo([0,1])
+  }
+  '
+)
 ```
 
 
+## Further analysis
+
+Try to create a faceplotting of the PUL location of the three services as an example of further analysis.
+
+```{r}
+green_df <- read_csv("data/green_tripdata_2019-01.csv")
+fhv_df <- read_csv("data/fhv_tripdata_2019-01.csv")
+```
+
+Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
+```{r}
+green_df_sample_taxy <- green_df[sample(nrow(green_df), 3219), ] %>%
+  subset(select = c(PULocationID,DOLocationID)) 
+
+green_nyc_PUL <- left_join(green_df_sample_taxy,map_nyc,"PULocationID") %>%
+  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+
+green_nyc_DOL <- left_join(green_df,map_nyc,"DOLocationID") %>%
+  subset(select = c(passenger_count,lpep_pickup_datetime,lpep_dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+```
+
+Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
+```{r}
+fhv_df <- drop_na(fhv_df)
+fhv_sample <- fhv_df[sample(nrow(fhv_df), 743219), ]
+
+fhv_nyc_PUL <- left_join(fhv_sample, map_nyc, "PULocationID") %>%
+  subset(select = c(pickup_datetime,dropoff_datetime,PULocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+
+fhv_nyc_DOL <- left_join(fhv_sample, map_nyc, "DOLocationID") %>%
+  subset(select = c(pickup_datetime,dropoff_datetime,DOLocationID,Shape_Leng,zone,borough, geometry)) %>%
+  drop_na()
+```
+
+Plot the NYC map - green taxy PUL
+```{r}
+green_PUL_sample_taxy_map <- green_nyc_PUL %>% group_by(PULocationID) %>%
+  summarize(count=n())
+
+green_taxy_PUL_map <- left_join(green_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
+  subset(select = c(PULocationID, count, geometry))
+
+ggplot() +
+  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = green_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
+  scale_fill_viridis_c()
+```
