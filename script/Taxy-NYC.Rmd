@@ -7,12 +7,12 @@ editor_options:
 
 ## Introduction
 
-In New York City the transportation is divided between public transportation such as metropolitan or buses and private transportation where we can find taxis and ride-hailing companies.
+In New York City the transportation is divided between public transportation such as metropolitan or buses and private transportation where we can find taxis and ride-hailing companies like Uber or Lyft.
 If we focus only on taxis in NYC we can find two main group:  
 a) the (iconic) **yellow cab** that are concentrated in the borough of Manhattan, but can be hailed anywhere throughout the five boroughs of New York City and may be hailed with a raised hand or by standing at a taxi stand;  
 b) the (apple) **green cab** that can be hailed only in the outer boroughs (except at the airports) and in the northern part of Manhattan, specifically above 96th street on the east side and above 110th street on the west side.  
   
-The scope of this project is to analyse the most frequent route made by the yellow taxy and which were the most common zone where taxi picks-up or drops-off the people during the month of January 2019.  
+The scope of this project is to analyse the most frequent route made just by the yellow taxy and which were the most common zone where taxi picks-up or drops-off the people during the month of January 2019.  
 The data used are avaiable for free from the NYC Govermnet website at the following link:   https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
 ## Getting ready  
@@ -106,7 +106,7 @@ To answer this question we have to use the data frame *yellow_nyc_PUL*. On this 
 Once this data frame is created we can join it with the data frame *map_nyc* by the column PULocationID and keeping only a subset of it. The result is going to be saved in a new variable called *yellow_taxi_PUL_map*.  
 The map we are going to create should visualize what are the most common zone where taxi picks-up people. For doing this we can use the nyc_map and fill the zone with the count value.
 
-```{r}
+```{r, fig.width = 15, fig.height = 11}
 yellow_PUL_sample_taxi_map <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
   summarize(count=n())
 
@@ -114,11 +114,11 @@ yellow_taxi_PUL_map <- left_join(yellow_PUL_sample_taxi_map,map_nyc, 'PULocation
   subset(select = c(PULocationID, count, geometry))
 
 PUL_map <- ggplot() +
-  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = map_nyc, size = 0.03, alpha = 0.4) +
   geom_sf (data = yellow_taxi_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) +
-  scale_fill_distiller(palette = "Spectral", breaks=c(0,25,50,75,100,125,150)) +
-  guides(fill = guide_colourbar(barheight = unit( 3 , "in" ), ticks.colour = "black", ticks.linewidth = 1))+
-  ggtitle('Which are the zones where taxy picks-up most people?') +
+  scale_fill_distiller(palette = "Spectral", breaks=c(0,25,50,75,100,125,150), name="Count of people") +
+  guides(fill = guide_colourbar(barheight = unit(7 , "in"), ticks.colour = "black", ticks.linewidth = 2))+
+  ggtitle('Which are the zones where taxis picks-up most people?') +
   dark_mode()
 
 PUL_map
@@ -130,7 +130,7 @@ What is possible to see in the maps is that as expected the yellow taxi operates
 
 For answering the question about which are the most common zones where taxi drop-off people, we are going to work as before but this time we will consider the column DOLocationID.
 
-```{r}
+```{r,fig.width = 15, fig.height = 11}
 yellow_DOL_sample_taxi_map <- yellow_nyc_DOL %>% group_by(DOLocationID) %>%
   summarize(count=n())
 
@@ -138,299 +138,296 @@ yellow_taxi_DOL_map <- left_join(yellow_DOL_sample_taxi_map,map_nyc, 'DOLocation
   subset(select = c(DOLocationID, count, geometry))
 
 DOL_map <- ggplot() +
-  geom_sf (data = map_nyc, size = 0.03) +
+  geom_sf (data = map_nyc, size = 0.03, alpha = 0.4) +
   geom_sf (data = yellow_taxi_DOL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_distiller(palette = "Spectral", breaks=c(0,25,50,75,100,125,150)) +
-  guides(fill = guide_colourbar(barheight = unit( 3 , "in" ), ticks.colour = "black", ticks.linewidth = 1))+
-  ggtitle('Which are the zones taxy drops-off most people?') +
+  scale_fill_distiller(palette = "Spectral", breaks=c(0,25,50,75,100,125,150),name="Count of people") +
+  guides(fill = guide_colourbar(barheight = unit( 7 , "in" ), ticks.colour = "black", ticks.linewidth = 2))+
+  ggtitle('Which are the zones taxis drops-off most people?') +
   dark_mode()
 
 DOL_map 
 ```
-What we can see from the map above, is that as before inside the Manhanttan zone the yellow taxi drop-off is intense. But we can see that also outside, excluding the JFK airport, yellow taxi are dropping-off people. An assumption of this could be that people that work inside the Manhattan zone lived outside.  
-
-
-
+What we can see from the map above, is that as before inside the Manhanttan zone the yellow taxis drop-off is intense. But what we can see is that also outside, excluding the JFK airport, yellow taxis are dropping-off people. An assumption of this could be that people that work inside the Manhattan zone may lived outside this could also explain why we can find a high number of picks-up in the central zone of Manhattan.  
 
 ### Sankey diagram 
 
 Script for creating the Sankey Diagram
 ```{r}
 names <- c(
-  `1` <- "Newark Airport",
-  `2` <- "Jamaica Bay",
-  `3` <- "Allerton/Pelham Gardens",
-  `4` <- "Arden City",
-  `5` <- "Arden Heights",
-  `6` <- "Arrochar/Fort Wadsworth",
+  `1` <- "Newark-Airport",
+  `2` <- "Jamaica-Bay",
+  `3` <- "Allerton/Pelham-Gardens",
+  `4` <- "Arden-City",
+  `5` <- "Arden-Heights",
+  `6` <- "Arrochar/Fort-Wadsworth",
   `7` <- "Astoria",
-  `8` <- "Astoria Park",
+  `8` <- "Astoria-Park",
   `9` <- "Auburndale",
-  `10` <- "Baisley Park",
-  `11` <- "Bath Beach",
-  `12` <- "Battery Park",
-  `13` <- "Battery Park City",
-  `14` <- "Bay Ridge",
-  `15` <- "Bay Terrace/Fort Totten",
+  `10` <- "Baisley-Park",
+  `11` <- "Bath-Beach",
+  `12` <- "Battery-Park",
+  `13` <- "Battery-Park-City",
+  `14` <- "Bay-Ridge",
+  `15` <- "Bay Terrace/Fort-Totten",
   `16` <- "Bayside",
   `17` <- "Bedford",
-  `18` <- "Bedford Park",
+  `18` <- "Bedford-Park",
   `19` <- "Bellerose",
   `20` <- "Belmont",
-  `21` <- "Bensonhurst East",
-  `22` <- "Bensonhurst West",
-  `23` <- "Bloomfield/Emerson Hill",
+  `21` <- "Bensonhurst-East",
+  `22` <- "Bensonhurst-West",
+  `23` <- "Bloomfield/Emerson-Hill",
   `24` <- "Bloomingdale",
-  `25` <- "Boerum Hill",
-  `26` <- "Borough Park",
-  `27` <- "Breezy Point/Fort Tilden/Riis Beach",
-  `28` <- "Briarwood/Jamaica Hills",
-  `29` <- "Brighton Beach",
-  `30` <- "Broad Channel",
-  `31` <- "Bronx Park",
+  `25` <- "Boerum-Hill",
+  `26` <- "Borough-Park",
+  `27` <- "Breezy-Point/Fort-Tilden/Riis-Beach",
+  `28` <- "Briarwood/Jamaica-Hills",
+  `29` <- "Brighton-Beach",
+  `30` <- "Broad-Channel",
+  `31` <- "Bronx-Park",
   `32` <- "Bronxdale",
-  `33` <- "Brooklyn Heights",
-  `34` <- "Brooklyn Navy Yard",
+  `33` <- "Brooklyn-Heights",
+  `34` <- "Brooklyn-Navy-Yard",
   `35` <- "Brownsville",
-  `36` <- "Bushwick North",
-  `37` <- "Bushwick South",
-  `38` <- "Cambria Heights",
+  `36` <- "Bushwick-North",
+  `37` <- "Bushwick-South",
+  `38` <- "Cambria-Heights",
   `39` <- "Canarsie",
-  `40` <- "Carroll Gardens",
-  `41` <- "Central Harlem",
-  `42` <- "Central Harlem North",
-  `43` <- "Central Park",
+  `40` <- "Carroll-Gardens",
+  `41` <- "Central-Harlem",
+  `42` <- "Central-Harlem-North",
+  `43` <- "Central-Park",
   `44` <- "Charleston/Tottenville",
   `45` <- "Chinatown",
-  `46` <- "City Island",
+  `46` <- "City-Island",
   `47` <- "Claremont/Bathgate",
-  `48` <- "Clinton East",
-  `49` <- "Clinton Hill",
-  `50` <- "Clinton Wes",
+  `48` <- "Clinton-East",
+  `49` <- "Clinton-Hill",
+  `50` <- "Clinton-Wes",
   `51` <- "Co-Op City",
-  `52` <- "Cobble Hill",
-  `53` <- "College Point",
-  `54` <- "Columbia Street",
-  `55` <- "Coney Island",
-  `56` <- "Corona North",
-  `57` <- "Corona South",
-  `58` <- "Country Clubt",
-  `59` <- "Crotona Park",
-  `60` <- "Crotona Park Eas",
-  `61` <- "Crown Heights North",
-  `62` <- "Crown Heights South",
-  `63` <- "Cypress Hills",
+  `52` <- "Cobble-Hill",
+  `53` <- "College-Point",
+  `54` <- "Columbia-Street",
+  `55` <- "Coney-Island",
+  `56` <- "Corona-North",
+  `57` <- "Corona-South",
+  `58` <- "Country-Clubt",
+  `59` <- "Crotona-Park",
+  `60` <- "Crotona-Park-Eas",
+  `61` <- "Crown-Heights-North",
+  `62` <- "Crown-Heights-South",
+  `63` <- "Cypress-Hills",
   `64` <- "Douglaston",
-  `65` <- "Downtown Brooklyn/MetroTech",
+  `65` <- "Downtown-Brooklyn/MetroTech",
   `66` <- "DUMBO/Vinegar Hill",
-  `67` <- "Dyker Heights",
-  `68` <- "East Chelsea",
-  `69` <- "East Concourse/Concourse Village",
-  `70` <- "East Elmhurst",
-  `71` <- "East Flatbush/Farragut",
-  `72` <- "East Flatbush/Remsen Village",
-  `73` <- "East Flushing",
-  `74` <- "East Harlem North",
-  `75` <- "East Harlem South",
-  `76` <- "East New York",
-  `77` <- "East New York/Pennsylvania Avenue",
-  `78` <- "East Tremont",
-  `79` <- "East Village",
-  `80` <- "East Williamsburg",
+  `67` <- "Dyker-Heights",
+  `68` <- "East-Chelsea",
+  `69` <- "East-Concourse/Concourse-Village",
+  `70` <- "East-Elmhurst",
+  `71` <- "East-Flatbush/Farragut",
+  `72` <- "East-Flatbush/Remsen Village",
+  `73` <- "East-Flushing",
+  `74` <- "East-Harlem-North",
+  `75` <- "East-Harlem-South",
+  `76` <- "East-New-York",
+  `77` <- "East-New-York/Pennsylvania Avenue",
+  `78` <- "East-Tremont",
+  `79` <- "East-Village",
+  `80` <- "East-Williamsburg",
   `81` <- "Eastchester",
   `82` <- "Elmhurst",
   `83` <- "Elmhurst/Maspeth",
   `84` <- "Eltingville/Annadale/Prince's Bay",
   `85` <- "Erasmus",
-  `86` <- "Far Rockaway",
-  `87` <- "Financial District North",
-  `88` <- "Financial District South",
-  `89` <- "Flatbush/Ditmas Park",
+  `86` <- "Far-Rockaway",
+  `87` <- "Financial-District-North",
+  `88` <- "Financial-District-South",
+  `89` <- "Flatbush/Ditmas-Park",
   `90` <- "Flatiron",
   `91` <- "Flatlands",
   `92` <- "Flushing",
-  `93` <- "Flushing Meadows-Corona Park",
-  `94` <- "Fordham South",
-  `95` <- "Forest Hills",
-  `96` <- "Forest Park/Highland Park",  
-  `97` <- "Fort Greene",
-  `98` <- "Fresh Meadows",
-  `99` <- "Freshkills Park",
-  `100` <- "Garment District",
-  `101` <- "Glen Oaks",
+  `93` <- "Flushing-Meadows-Corona-Park",
+  `94` <- "Fordham-South",
+  `95` <- "Forest-Hills",
+  `96` <- "Forest-Park/Highland-Park",  
+  `97` <- "Fort-Greene",
+  `98` <- "Fresh-Meadows",
+  `99` <- "Freshkills-Park",
+  `100` <- "Garment-District",
+  `101` <- "Glen-Oaks",
   `102` <- "Glendale",
-  `103` <- "Governor's Island",
-  `104` <- "Ellis Island",
-  `105` <- "Liberty Island",
+  `103` <- "Governor's-Island",
+  `104` <- "Elli's-Island",
+  `105` <- "Liberty-Island",
   `106` <- "Gowanus",
   `107` <- "Gramercy",
   `108` <- "Gravesend",
-  `109` <- "Great Kills",
-  `110` <- "Great Kills Park",
-  `111` <- "Green-Wood Cemetery",
+  `109` <- "Great-Kills",
+  `110` <- "Great-Kills-Park",
+  `111` <- "Green-Wood-Cemetery",
   `112` <- "Greenpoint",
-  `113` <- "Greenwich Village North",
-  `114` <- "Greenwich Village South",
-  `115` <- "Grymes Hill/Clifton",
-  `116` <- "Hamilton Heights",
+  `113` <- "Greenwich-Village-North",
+  `114` <- "Greenwich-Village-South",
+  `115` <- "Grymes-Hill/Clifton",
+  `116` <- "Hamilton-Heights",
   `117` <- "Hammels/Arverne",
-  `118` <- "Heartland Village/Todt Hill",
+  `118` <- "Heartland-Village/Todt Hill",
   `119` <- "Highbridge",
-  `120` <- "Highbridge Park",
+  `120` <- "Highbridge-Park",
   `121` <- "Hillcrest/Pomonok",
   `122` <- "Hollis",
   `123` <- "Homecrest",
-  `124` <- "Howard Beach",
-  `125` <- "Hudson Sq",
-  `126` <- "Hunts Point",
+  `124` <- "Howard-Beach",
+  `125` <- "Hudson-Sq",
+  `126` <- "Hunts-Point",
   `127` <- "Inwood",
-  `128` <- "Inwood Hill Park",
-  `129` <- "Jackson Heights",
+  `128` <- "Inwood-Hill-Park",
+  `129` <- "Jackson-Heights",
   `130` <- "Jamaica",
-  `131` <- "Jamaica Estates",
-  `132` <- "JFK Airport",
+  `131` <- "Jamaica-Estates",
+  `132` <- "JFK-Airport",
   `133` <- "Kensington",
-  `134` <- "Kew Gardens",
-  `135` <- "Kew Gardens Hills",
-  `136` <- "Kingsbridge Heights",
+  `134` <- "Kew-Gardens",
+  `135` <- "Kew-Gardens-Hills",
+  `136` <- "Kingsbridge-Heights",
   `137` <- "Kips Bay",
-  `138` <- "LaGuardia Airport",
+  `138` <- "LaGuardia-Airport",
   `139` <- "Laurelton",
-  `140` <- "Lenox Hill East",
-  `141` <- "Lenox Hill West",
-  `142` <- "Lincoln Square East",
-  `143` <- "Lincoln Square West",
-  `144` <- "Little Italy/NoLiTa",
-  `145` <- "Long Island City/Hunters Point",
-  `146` <- "Long Island City/Queens Plaza",
+  `140` <- "Lenox-Hill-East",
+  `141` <- "Lenox-Hill-West",
+  `142` <- "Lincoln-Square-East",
+  `143` <- "Lincoln-Square-West",
+  `144` <- "Little-Italy/NoLiTa",
+  `145` <- "Long-Island-City/Hunters-Point",
+  `146` <- "Long-Island-City/Queens-Plaza",
   `147` <- "Longwood",
-  `148` <- "Lower East Side",
+  `148` <- "Lower-East-Side",
   `149` <- "Madison",
-  `150` <- "Manhattan Beach",
-  `151` <- "Manhattan Valley",
+  `150` <- "Manhattan-Beach",
+  `151` <- "Manhattan-Valley",
   `152` <- "Manhattanville",
-  `153` <- "Marble Hill",
-  `154` <- "Marine Park/Floyd Bennett Field",
-  `155` <- "Marine Park/Mill Basin",
-  `156` <- "Mariners Harbor",
+  `153` <- "Marble-Hill",
+  `154` <- "Marine-Park/Floyd-Bennett-Field",
+  `155` <- "Marine-Park/Mill-Basin",
+  `156` <- "Mariners-Harbor",
   `157` <- "Maspeth",
-  `158` <- "Meatpacking/West Village West",
-  `159` <- "Melrose South",
-  `160` <- "Middle Villagee",
-  `161` <- "Midtown Center",
-  `162` <- "Midtown East",
-  `163` <- "Midtown North",
-  `164` <- "Midtown South",
+  `158` <- "Meatpacking/West-Village-West",
+  `159` <- "Melrose-South",
+  `160` <- "Middle-Villagee",
+  `161` <- "Midtown-Center",
+  `162` <- "Midtown-East",
+  `163` <- "Midtown-North",
+  `164` <- "Midtown-South",
   `165` <- "Midwood",
-  `166` <- "Morningside Heights",
+  `166` <- "Morningside-Heights",
   `167` <- "Morrisania/Melrose",
-  `168` <- "Mott Haven/Port Morris",
-  `169` <- "Mount Hope",
-  `170` <- "Murray Hill",
-  `171` <- "Murray Hill-Queens",
-  `172` <- "New Dorp/Midland Beach",
-  `173` <- "North Corona",
+  `168` <- "Mott-Haven/Port Morris",
+  `169` <- "Mount-Hope",
+  `170` <- "Murray-Hill",
+  `171` <- "Murray-Hill-Queens",
+  `172` <- "New-Dorp/Midland Beach",
+  `173` <- "North-Corona",
   `174` <- "Norwood",
-  `175` <- "Oakland Gardens",
+  `175` <- "Oakland-Gardens",
   `176` <- "Oakwood",
-  `177` <- "Ocean Hill",
-  `178` <- "Ocean Parkway South",
-  `179` <- "Old Astoria",
-  `180` <- "Ozone Park",
-  `181` <- "Park Slop",
+  `177` <- "Ocean-Hill",
+  `178` <- "Ocean-Parkway-South",
+  `179` <- "Old-Astoria",
+  `180` <- "Ozone-Park",
+  `181` <- "Park-Slop",
   `182` <- "Parkchester",
-  `183` <- "Pelham Bay",
-  `184` <- "Pelham Bay Park",
-  `185` <- "Pelham Parkway",
-  `186` <- "Penn Station/Madison Sq West",
-  `187` <- "Port Richmond",
+  `183` <- "Pelham-Bay",
+  `184` <- "Pelham-Bay-Park",
+  `185` <- "Pelham-Parkway",
+  `186` <- "Penn-Station/Madison-Sq-West",
+  `187` <- "Port-Richmond",
   `188` <- "Prospect-Lefferts Gardens",
-  `189` <- "Prospect Heights",
-  `190` <- "Prospect Park",
-  `191` <- "Queens Village",
-  `192` <- "Queensboro Hill",
+  `189` <- "Prospect-Heights",
+  `190` <- "Prospect-Park",
+  `191` <- "Queens-Village",
+  `192` <- "Queensboro-Hill",
   `193` <- "Queensbridge/Ravenswood",
-  `194` <- "Randalls Island",
-  `195` <- "Red Hook",
-  `196` <- "Rego Park",
-  `197` <- "Richmond Hill",
+  `194` <- "Randalls-Island",
+  `195` <- "Red-Hook",
+  `196` <- "Rego-Park",
+  `197` <- "Richmond-Hill",
   `198` <- "Ridgewood",
-  `199` <- "Rikers Island",
+  `199` <- "Rikers-Island",
   `200` <- "Riverdale/North Riverdale/Fieldston",
-  `201` <- "Rockaway Park",
-  `202` <- "Roosevelt Island",
+  `201` <- "Rockaway-Park",
+  `202` <- "Roosevelt-Island",
   `203` <- "Rosedale",
   `204` <- "Rossville/Woodrow",
-  `205` <- "Saint Albans",
-  `206` <- "Saint George/New Brighton",
-  `207` <- "Saint Michaels Cemetery/Woodside",
-  `208` <- "Schuylerville/Edgewater Park",
+  `205` <- "Saint-Albans",
+  `206` <- "Saint-George/New Brighton",
+  `207` <- "Saint-Michaels-Cemetery/Woodside",
+  `208` <- "Schuylerville/Edgewater-Park",
   `209` <- "Seaport",
-  `210` <- "Sheepshead Bay",
+  `210` <- "Sheepshead-Bay",
   `211` <- "SoHo",
   `212` <- "Soundview/Bruckner",
   `213` <- "Soundview/Castle Hill",
-  `214` <- "South Beach/Dongan Hills",
-  `215` <- "South Jamaica",
-  `216` <- "South Ozone Park",
-  `217` <- "South Williamsburg",
-  `218` <- "Springfield Gardens North",
-  `219` <- "Springfield Gardens South",
-  `220` <- "Spuyten Duyvil/Kingsbridge",
+  `214` <- "South-Beach/Dongan Hills",
+  `215` <- "South-Jamaica",
+  `216` <- "South-Ozone Park",
+  `217` <- "South-Williamsburg",
+  `218` <- "Springfield-Gardens-North",
+  `219` <- "Springfield-Gardens-South",
+  `220` <- "Spuyten-Duyvil/Kingsbridge",
   `221` <- "Stapleton",
-  `222` <- "Starrett City",
+  `222` <- "Starrett-City",
   `223` <- "Steinway",
-  `224` <- "Stuy Town/Peter Cooper Village",
-  `225` <- "Stuyvesant Heights",
+  `224` <- "Stuy-Town/Peter-Cooper-Village",
+  `225` <- "Stuyvesant-Heights",
   `226` <- "Sunnyside",
-  `227` <- "Sunset Park East",
-  `228` <- "Sunset Park West",
-  `229` <- "Sutton Place/Turtle Bay North",
-  `230` <- "Times Sq/Theatre District",
-  `231` <- "TriBeCa/Civic Center",
-  `232` <- "Two Bridges/Seward Park",
-  `233` <- "UN/Turtle Bay South",
-  `234` <- "Union Sq",
-  `235` <- "University Heights/Morris Heights",
-  `236` <- "Upper East Side North",
-  `237` <- "Upper East Side South",
-  `238` <- "Upper West Side North",
-  `239` <- "Upper West Side South",
-  `240` <- "Van Cortlandt Park",
-  `241` <- "Van Cortlandt Village",
-  `242` <- "Van Nest/Morris Park",
-  `243` <- "Washington Heights North",
-  `244` <- "Washington Heights South",
-  `245` <- "West Brighton",
-  `246` <- "West Chelsea/Hudson Yards",
-  `247` <- "West Concourse",
-  `248` <- "West Farms/Bronx River",
-  `249` <- "West Village",
-  `250` <- "Westchester Village/Unionport",
+  `227` <- "Sunset-Park-East",
+  `228` <- "Sunset-Park-West",
+  `229` <- "Sutton-Place/Turtle-Bay-North",
+  `230` <- "Times-Square/Theatre-District",
+  `231` <- "TriBeCa/Civic-Center",
+  `232` <- "Two-Bridges/Seward Park",
+  `233` <- "UN/Turtle-Bay-South",
+  `234` <- "Union-Square",
+  `235` <- "University-Heights/Morris-Heights",
+  `236` <- "North-Upper-East-Side",
+  `237` <- "South-Upper-East-Side",
+  `238` <- "Upper-West-Side-North",
+  `239` <- "Upper-West-Side-South",
+  `240` <- "Van-Cortlandt-Park",
+  `241` <- "Van-Cortlandt-Village",
+  `242` <- "Van-Nest/Morris-Park",
+  `243` <- "Washington-Heights-North",
+  `244` <- "Washington-Heights-South",
+  `245` <- "West-Brighton",
+  `246` <- "West-Chelsea/Hudson-Yards",
+  `247` <- "West-Concourse",
+  `248` <- "West-Farms/Bronx River",
+  `249` <- "West-Village",
+  `250` <- "Westchester-Village/Unionport",
   `251` <- "Westerleigh",
   `252` <- "Whitestone",
-  `253` <- "Willets Point",
+  `253` <- "Willets-Point",
   `254` <- "Williamsbridge/Olinville",
-  `255` <- "Williamsburg (North Side)",
-  `256` <- "Williamsburg (South Side)",
-  `257` <- "Windsor Terrace",
+  `255` <- "Williamsburg-North-Side",
+  `256` <- "Williamsburg-South-Side",
+  `257` <- "Windsor-Terrace",
   `258` <- "Woodhaven",
   `259` <- "Woodlawn",
   `260` <- "Wakefield",
   `261` <- "Woodside",
-  `262` <- "World Trade Center",
-  `263` <- "Yorkville East",
-  `264` <- "Yorkville West"
+  `262` <- "World-Trade-Center",
+  `263` <- "Yorkville-East",
+  `264` <- "Yorkville-West"
 )
 ``` 
 
-```{r}
+```{r,fig.width = 9.4, fig.height = 16}
 final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
       summarize(Count = n())
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 50)
+final_table_head <- head(final_table_ordered, 30)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
@@ -451,13 +448,19 @@ links$IDtarget <- match(links$target, nodes$name)-1
 links$group <- as.factor(links$source)
 nodes$group <- as.factor(nodes$name)
 
+
+color <- c("#ed8e89", "#f7b685", "#f3eba5","#94c691","#9bd6d9","#b4a8e0","#9fc0de","#ffb6b9", "#8ac6d1", "#fae3d9","#bbded6", "#a7e9af","#e0bbe4", "#deff8b","#ffb447", "#b5ead7", "#77df79", "#ffb347", "#779ecc", "#ff756d", "acecd5","#ffb447", "#e0bbe4")
+
+colors <- paste(color, collapse = '", "')
+colorJS <- paste('d3.scaleOrdinal(["', colors, '"])')
+
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
               Value = "value", NodeID = "name", iterations = 30,
-              sinksRight=TRUE, LinkGroup="group", NodeGroup="group", units = 'pick-up', 
-              fontSize = 12, fontFamily = "sans-serif") 
+              sinksRight=TRUE, LinkGroup="group", NodeGroup="group", units = 'trips', 
+              fontSize = 15, fontFamily = "sans-serif", colourScale = colorJS) 
 
-p <- htmlwidgets::prependContent(p, htmltools::tags$h3("The most common trips made by a yellow taxi"))
+p <- htmlwidgets::prependContent(p, htmltools::tags$h3("The most common trips made by yellow taxis"))
 
 p
 ```
@@ -465,43 +468,6 @@ p
 
 ## Further analysis
 
-Try to create a faceplotting of the PUL location of the three services as an example of further analysis.
-
-```{r}
-green_df <- read_csv("data/green_tripdata_2019-01.csv")
-fhv_df <- read_csv("data/fhv_tripdata_2019-01.csv")
-```
-
-Edit the green cab dataframe in order to keep only the column usefull for the creation of the map.
-```{r}
-green_df_sample_taxy <- green_df[sample(nrow(green_df), 3219), ] %>%
-  subset(select = c(PULocationID,DOLocationID)) 
-
-green_nyc_PUL <- left_join(green_df_sample_taxy,map_nyc,"PULocationID") %>%
-  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-Edit the fhv dataframe by dropping all the na row and keep only the one usefull for the map.
-```{r}
-fhv_df <- drop_na(fhv_df)
-fhv_sample <- fhv_df[sample(nrow(fhv_df), 3219), ]
-
-fhv_nyc_PUL <- left_join(fhv_sample, map_nyc, "PULocationID") %>%
-  subset(select = c(PULocationID,Shape_Leng,zone,borough, geometry)) %>%
-  drop_na()
-```
-
-Plot the NYC map - green taxy PUL
-```{r}
-green_PUL_sample_taxy_map <- green_nyc_PUL %>% group_by(PULocationID) %>%
-  summarize(count=n())
-
-green_taxy_PUL_map <- left_join(green_PUL_sample_taxy_map,map_nyc, 'PULocationID') %>%
-  subset(select = c(PULocationID, count, geometry))
-
-ggplot() +
-  geom_sf (data = map_nyc, size = 0.03) +
-  geom_sf (data = green_taxy_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) + 
-  scale_fill_viridis_c()
-```
+This was just a starting point of data exploration and visualization about the private transportation in New York City.  
+This analysis could go further for example by analizing the trafic generated by the green taxi and then by ride-hailing companies.  
+If instead we want to investigate more the yellow taxi we could analize how the citizen pay for the ride and if the zone where they are picking-up or dropping-off the taxi ha some relationship with the tips or the number of passenger.
