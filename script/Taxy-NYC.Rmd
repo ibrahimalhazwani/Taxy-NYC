@@ -48,6 +48,7 @@ Using the command *read_csv*, we load the data about all the trips made by the y
 yellow_df <- read_csv("../data/yellow_tripdata_2019-01.csv")
 map_nyc <- read_sf("../data/taxi_zones.shp")
 ```
+
 Let's display the first rows of the data frame yellow_df.  
 The comand *head(data_frame)* is useful to start investigating of which column the data frame is composed and which data they contain.
 
@@ -60,6 +61,7 @@ By this first simple investication we see that the data frame contains two colum
 - DOLocationID, location where  the meter was disengaged;  
   
 Let's now displaying the first rows of map_nyc.
+
 ```{r}
 head(map_nyc)
 ```
@@ -427,7 +429,7 @@ final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 30)
+final_table_head <- head(final_table_ordered, 50)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
@@ -448,15 +450,14 @@ links$IDtarget <- match(links$target, nodes$name)-1
 links$group <- as.factor(links$source)
 nodes$group <- as.factor(nodes$name)
 
+color <- c("#ed8e89", "#acecd5","#f7b685","#bbded6","#f3eba5","#94c691", "#f5b7b7","#b4a8e0", "#8ac6d1","#e0bbe4", "#deff8b","#b0deff", "#b5ead7", "#77df79", "#ffb347", "#779ecc", "#ff756d", "#fecbd9", "#4baea0", "#e0fefe", "#ff9aa2", "#b4a24c", "#08bf7c", "#4d8ab5", "#db2e2a","#ffd300", "#67c7eb", "#a8a9ad", "#c36a2d", "#ff9c12", "#cc45f2","#9bd6d9")
 
-color <- c("#ed8e89", "#f7b685", "#f3eba5","#94c691","#9bd6d9","#b4a8e0","#9fc0de","#ffb6b9", "#8ac6d1", "#fae3d9","#bbded6", "#a7e9af","#e0bbe4", "#deff8b","#ffb447", "#b5ead7", "#77df79", "#ffb347", "#779ecc", "#ff756d", "acecd5","#ffb447", "#e0bbe4")
-
-colors <- paste(color, collapse = '", "')
-colorJS <- paste('d3.scaleOrdinal(["', colors, '"])')
+color <- paste(color, collapse = '", "')
+colorJS <- paste('d3.scaleOrdinal(["', color, '"])')
 
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name", iterations = 30,
+              Value = "value", NodeID = "name", iterations = 20,
               sinksRight=TRUE, LinkGroup="group", NodeGroup="group", units = 'trips', 
               fontSize = 15, fontFamily = "sans-serif", colourScale = colorJS) 
 
