@@ -429,7 +429,7 @@ final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %
 
 final_table_ordered <- final_table[with(final_table, order(-Count)),]
 
-final_table_head <- head(final_table_ordered, 50)
+final_table_head <- head(final_table_ordered, 30)
 
 links <- data.frame(source = final_table_head$PULocationID,
                     target = final_table_head$DOLocationID,
@@ -450,14 +450,14 @@ links$IDtarget <- match(links$target, nodes$name)-1
 links$group <- as.factor(links$source)
 nodes$group <- as.factor(nodes$name)
 
-color <- c("#ed8e89", "#acecd5","#f7b685","#bbded6","#f3eba5","#94c691", "#f5b7b7","#b4a8e0", "#8ac6d1","#e0bbe4", "#deff8b","#b0deff", "#b5ead7", "#77df79", "#ffb347", "#779ecc", "#ff756d", "#fecbd9", "#4baea0", "#e0fefe", "#ff9aa2", "#b4a24c", "#08bf7c", "#4d8ab5", "#db2e2a","#ffd300", "#67c7eb", "#a8a9ad", "#c36a2d", "#ff9c12", "#cc45f2","#9bd6d9")
+color <- c("#ff9c12","#b0deff","#acecd5","#f7b685", "#bbded6","#4285f4","#ed8e89","#f3eba5","#94c691", "#f5b7b7","#b4a8e0", "#8ac6d1","#b5ead7","#e0bbe4", "#deff8b", "#779ecc", "#fecbd9","#ffb347", "#4baea0", "#e0fefe", "#ff9aa2", "#b4a24c", "#08bf7c", "#4d8ab5", "#db2e2a","#ffd300", "#a8a9ad", "#c36a2d", "#cc45f2","#9bd6d9", "#ff756d", "#77df79")
 
 color <- paste(color, collapse = '", "')
 colorJS <- paste('d3.scaleOrdinal(["', color, '"])')
 
 p <- sankeyNetwork(Links = links, Nodes = nodes,
               Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name", iterations = 20,
+              Value = "value", NodeID = "name", iterations = 30,
               sinksRight=TRUE, LinkGroup="group", NodeGroup="group", units = 'trips', 
               fontSize = 15, fontFamily = "sans-serif", colourScale = colorJS) 
 
