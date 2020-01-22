@@ -1,25 +1,27 @@
 ---
-title: "Usage of the yellow taxi in January 2019"
+title: "Hailing a Taxi: where new yorkes goes on January 2019"
+subtitle: "Data Visualization and Exploration- Winter semester 19/20"
 output: html_notebook
 editor_options: 
   chunk_output_type: inline
 ---
+##### Project by Ibrahim Al Hazwani, student ID number 18556
 
 ## Introduction
 
-In New York City the transportation is divided between public transportation such as metropolitan or buses and private transportation where we can find taxis and ride-hailing companies like Uber or Lyft.
-If we focus only on taxis in NYC we can find two main group:  
-a) the (iconic) **yellow cab** that are concentrated in the borough of Manhattan, but can be hailed anywhere throughout the five boroughs of New York City and may be hailed with a raised hand or by standing at a taxi stand;  
+In New York City the transportation is divided between public transportation such as metropolitan or buses and private transportation where we can find taxis and ride-sharing companies like Uber or Lyft.
+If we focus only on taxis in NYC we can find two main groups:  
+a) the (iconic) **yellow cabs** that are concentrated in the borough of Manhattan, but can be hailed anywhere throughout the five boroughs of New York City and may be hailed with a raised hand or by standing at a taxi stand;  
 b) the (apple) **green cab** that can be hailed only in the outer boroughs (except at the airports) and in the northern part of Manhattan, specifically above 96th street on the east side and above 110th street on the west side.  
   
-The scope of this project is to analyse the most frequent route made just by the yellow taxy and which were the most common zone where taxi picks-up or drops-off the people during the month of January 2019.  
-The data used are avaiable for free from the NYC Govermnet website at the following link:   https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+The scope of this project is to analyze the most frequent route made just by the yellow taxies and which were the most common zones where taxi pick-up or drop-off the people during the month of January 2019.  
+The data used are available for free from the NYC Government website at the following link:   https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page
 
 ## Getting ready  
 
-The first step is to install the libraries useful for the analysis and the visualization.  
-For doing this we can use the comand *install.packages('name_of_the_library')*.  
-In particular the library *sf* is going to be used for creating the map of New York City while the *networkD3*, a Javascript based library, is going to used for the Sankey Diagram.
+The first step is to install the libraries used for the analysis and the visualization.  
+For doing this we can use the command *install.packages('name_of_the_library')*.  
+In particular, the library *sf* is going to be used for creating the map of New York City while the *networkD3*, a Javascript-based library, is going to use for the Sankey Diagram.
 
 ```{r}
 install.packages('tidyverse')
@@ -42,7 +44,7 @@ library(htmltools)
 
 ## Data preprocessing
 
-Using the command *read_csv*, we load the data about all the trips made by the yellow taxi during the month of January 2019 while with *read_sf* we load the geographical shape file of New York City that will use to create the map of the city.
+Using the command *read_csv*, we load the data about all the trips made by the yellow taxi during the month of January 2019 while with *read_sf* we load the geographical shapefile of New York City that will be used to create the map of the city.
 
 ```{r}
 yellow_df <- read_csv("../data/yellow_tripdata_2019-01.csv")
@@ -50,31 +52,32 @@ map_nyc <- read_sf("../data/taxi_zones.shp")
 ```
 
 Let's display the first rows of the data frame yellow_df.  
-The comand *head(data_frame)* is useful to start investigating of which column the data frame is composed and which data they contain.
+The command *head(data_frame)* is useful to start investigating the columns of the data frame and the values they contain.
 
 ```{r}
 head(yellow_df)
 ```
 
-By this first simple investication we see that the data frame contains two columns that we can use for answering which are the most common zone where taxi pick-up or drop-off. These two coloumn are:
-- PULocationID, location where the meter was engaged;  
-- DOLocationID, location where  the meter was disengaged;  
+By this first simple investigation, we see that the data frame contains two columns that we can use for answering which are the most common zones where taxi pick-up or drop-off. These two columns are:
+- PULocationID, the location where the meter was engaged;  
+- DOLocationID, the location where  the meter was stopped;  
   
-Let's now displaying the first rows of map_nyc.
+Let's now display the first rows of map_nyc.
 
 ```{r}
 head(map_nyc)
 ```
-As we can see, also here there is the information about the location (LocationID) what we need to do is to create two columns called 'PULocationID' and 'DOLocatioID'. Why this? So we can later join the data frame about the trips made with this one in this way we can star analyse what are the most common zones and which are the most frequent route.  
+As we can see, also here there is the information about the location (LocationID) what we need to do is to create two columns called 'PULocationID' and 'DOLocatioID'. Why this? So we can later join the data frame about the trips made with this one in this way we can star analyze what are the most common zones and which are the most frequent route.
+So now we can get the IDs of the locations for the pick-up(PULocationID) and the drop-offs(DOLocationID), we do this so we can later join the data frame about the trips made and do an analysis to see the most common zones and which routes are the most frequent.
 
 ```{r}
 map_nyc$PULocationID <- map_nyc$LocationID
 map_nyc$DOLocationID <- map_nyc$LocationID
 ```
 
-The dataframe about the yellow taxi taken in January contains about two million rows, for the purpose of the visualization project I decided to take two samples one for each visualization.  
-The Sankey diagram is going to be created on a sample of about 30% of the original data set, while the maps are going to be create using a sample of about 0.1% of the original size.    
-For both the two new data frames *yellow_df_sample_sankey* and *yellow_df_sample_taxy* we are going to create a subset keeping only the two columns PULocationID, DOLocationID and dropping the rows with NA value.
+The data frame about the yellow taxi taken in January contains about two million rows, for the purpose of the visualization project I decided to take two samples one for each visualization.  
+The Sankey diagram is going to be created on a sample of about 30% of the original data set, while the maps are going to be created using a sample of about 0.1% of the original size.    
+For both new data frames *yellow_df_sample_sankey* and *yellow_df_sample_taxy* we are going to create a subset keeping only the two columns PULocationID, DOLocationID and dropping the rows with NA value.
 
 ```{r}
 yellow_df_sample_sankey <- yellow_df[sample(nrow(yellow_df), 743219), ] %>% 
@@ -86,9 +89,9 @@ yellow_df_sample_taxi <- yellow_df[sample(nrow(yellow_df), 3219), ] %>%
   drop_na()
 ```
 
-Since want we want to visualize are the zones where most NYC citizen are pick-up or drop-off by a taxi it is better to created two new data frames one for each action. Each data frame will contain only the columns useful to the creation of the map, this can be achive by creating a subset.
+Since what we want to visualize are the zones where most NYC citizens are picked up or dropped off by a taxi it is better to create two new data frames one for the drop-off and one for the pick-up. Each data frame will contain only the columns useful to the creation of the map, this can be achieved by creating a subset.
   
-The two new data frames are made using a left join between the *yellow_df_sample* and *map_nyc*. From this join we only keep the columns: PULocationID (or DOLocationID),Shape_Leng, zone, borough, geometry and we will dropp the rows where NA value is shown.
+The two new data frames are made using a left join between the *yellow_df_sample* and *map_nyc*. From this join, we only keep the columns: PULocationID (or DOLocationID), Shape_Leng, zone, borough, geometry and we will drop the NA values.
 
 ```{r}
 yellow_nyc_PUL <- left_join(yellow_df_sample_taxi,map_nyc,"PULocationID") %>%
@@ -102,11 +105,12 @@ yellow_nyc_DOL <- left_join(yellow_df_sample_taxi,map_nyc,"DOLocationID") %>%
 
 ## Data Visualization 
 
-#### Map of the most pick-up location 
-The first visualization we are goint to do is for answering the question "Which are the zone where taxi pick-up most people?".  
-To answer this question we have to use the data frame *yellow_nyc_PUL*. On this data frame we are going to apply a *group_by* function to the column PULocationID. Once grouped we are going to count how many PULocationID are in the data fram and save this result in a new column called count. The result of this part of the code is saved in a new variable called *yellow_PUL_sample_taxy_map*. 
-Once this data frame is created we can join it with the data frame *map_nyc* by the column PULocationID and keeping only a subset of it. The result is going to be saved in a new variable called *yellow_taxi_PUL_map*.  
-The map we are going to create should visualize what are the most common zone where taxi picks-up people. For doing this we can use the nyc_map and fill the zone with the count value.
+#### Map of the most frequent pick-up location 
+The first question we are going to address with our visualization is:
+The first visualization we are going to do is for answering the question "Which are the zones where the taxies pick-up most people?".
+To answer this question we have to use the data frame *yellow_nyc_PUL*. On this data frame, we are going to apply a *group_by* function to the column PULocationID. Once grouped we are going to count how many PULocationID are in the data frame and save this result in a new column called count. The result of this code is saved in a new variable called *yellow_PUL_sample_taxy_map*. 
+Once this data frame is created we can join it with the data frame *map_nyc* by the column PULocationID and keep only a subset of it. The result is going to be saved in a new variable called *yellow_taxi_PUL_map*.  
+The map we are going to create should visualize what are the most common zones where taxis pick people up. For doing this we can use the nyc_map and fill the zone with the count value.
 
 ```{r, fig.width = 15, fig.height = 11}
 yellow_PUL_sample_taxi_map <- yellow_nyc_PUL %>% group_by(PULocationID) %>%
@@ -119,16 +123,16 @@ PUL_map <- ggplot() +
   geom_sf (data = map_nyc, size = 0.03, alpha = 0.4) +
   geom_sf (data = yellow_taxi_PUL_map, mapping = aes(fill = count, geometry = geometry), size = 0.05) +
   scale_fill_distiller(palette = "Spectral", breaks=c(0,25,50,75,100,125,150), name="Count of people") +
-  guides(fill = guide_colourbar(barheight = unit(7 , "in"), ticks.colour = "black", ticks.linewidth = 2))+
+  guides(fill = guide_colourbar(barheight = unit(7 , "in"), ticks.colour = "black", ticks.linewidth = 2)) +
   ggtitle('Which are the zones where taxis picks-up most people?') +
   dark_mode()
 
 PUL_map
 ```
-What is possible to see in the maps is that as expected the yellow taxi operates more intensely inside the Manhattan area in particular around the Upper East Side South, Upper East Side North, the Midtown East and the Midtown Center. Outside of the Manhattan area one zone where yellow taxi picks-up most people is the airport JFK (bottom right).
+What is possible to see in the maps is that, as expected, the yellow taxis are more present inside the Manhattan area in particular around the Upper East Side South, Upper East Side North, the Midtown East, and the Midtown Center. Outside of the Manhattan area, one zone where yellow taxi picks most people up is the airport JFK (bottom right).
 
 
-#### Map of the most drop-off location 
+#### Map of the most frequent drop-off location 
 
 For answering the question about which are the most common zones where taxi drop-off people, we are going to work as before but this time we will consider the column DOLocationID.
 
@@ -149,11 +153,14 @@ DOL_map <- ggplot() +
 
 DOL_map 
 ```
-What we can see from the map above, is that as before inside the Manhanttan zone the yellow taxis drop-off is intense. But what we can see is that also outside, excluding the JFK airport, yellow taxis are dropping-off people. An assumption of this could be that people that work inside the Manhattan zone may lived outside this could also explain why we can find a high number of picks-up in the central zone of Manhattan.  
+What we can see from the map above, is that as before inside the Manhanttan zone the yellow taxis activity is intense. But what we can see is that also outside, excluding the JFK airport, yellow taxis are dropping-off people. An assumption of this could be that people that work inside the Manhattan zone may live outside this could also explain why we can find a high number of picks-up in the central zone of Manhattan.  
 
 ### Sankey diagram 
 
-Script for creating the Sankey Diagram
+The next question we want to answer is "What are the most frequent trips taxis made?".  
+For visualizing a flow there are multiple possibilities, we can create and use a connection map, a flow map, a parallel sets or a Sankey diagram. I decided, in the end, to use a Sankey diagram because it will show clearly the flow. On one side of the graph is going to be the pick-up location while on the other the drop-off location. The two locations are going to be connected with a line which thickness is related to the number of same trips made.
+  
+Before starting to create the diagram using the *NetworkD3* library we have to create a named list that contains all the locationIDs related to the zone's name. The purpose of this is for later setting the label for the PULocation and DOLocation on the graph. 
 ```{r}
 names <- c(
   `1` <- "Newark-Airport",
@@ -423,6 +430,10 @@ names <- c(
 )
 ``` 
 
+Since we are going to use the *networkD3* library for creating a Sankey diagram we need to create a data frame lists with all the connections one by one. We are going to have one column for the source (PULocation), one for the target (DOLocation) and one with the count of how many trips with the same starting and endpoint are made.  
+Our Sankey diagram will display only the 30 most frequent trips.  
+The library we are going to use is based on Javascript and currently, there is no possibility to set the text outside of the diagram or to set the font-weight to bold for these reasons we are going to create a pastel color palette for filling the flows.
+
 ```{r,fig.width = 9.4, fig.height = 16}
 final_table <- yellow_df_sample_sankey %>% group_by(PULocationID,DOLocationID) %>%
       summarize(Count = n())
@@ -450,7 +461,7 @@ links$IDtarget <- match(links$target, nodes$name)-1
 links$group <- as.factor(links$source)
 nodes$group <- as.factor(nodes$name)
 
-color <- c("#ff9c12","#b0deff","#acecd5","#f7b685", "#bbded6","#4285f4","#ed8e89","#f3eba5","#94c691", "#f5b7b7","#b4a8e0", "#8ac6d1","#b5ead7","#e0bbe4", "#deff8b", "#779ecc", "#fecbd9","#ffb347", "#4baea0", "#e0fefe", "#ff9aa2", "#b4a24c", "#08bf7c", "#4d8ab5", "#db2e2a","#ffd300", "#a8a9ad", "#c36a2d", "#cc45f2","#9bd6d9", "#ff756d", "#77df79")
+color <- c("#ff9c12","#b0deff","#acecd5","#f7b685", "#bbded6","#4285f4","#ed8e89","#f3eba5","#94c691","#a8a9ad", "#f5b7b7","#b4a8e0", "#8ac6d1","#b5ead7","#e0bbe4", "#deff8b", "#779ecc", "#fecbd9","#ffb347", "#4baea0", "#e0fefe", "#ff9aa2", "#b4a24c", "#08bf7c", "#4d8ab5", "#db2e2a","#ffd300", "#c36a2d", "#cc45f2","#9bd6d9", "#ff756d", "#77df79")
 
 color <- paste(color, collapse = '", "')
 colorJS <- paste('d3.scaleOrdinal(["', color, '"])')
@@ -466,9 +477,10 @@ p <- htmlwidgets::prependContent(p, htmltools::tags$h3("The most common trips ma
 p
 ```
 
-
 ## Further analysis
 
-This was just a starting point of data exploration and visualization about the private transportation in New York City.  
-This analysis could go further for example by analizing the trafic generated by the green taxi and then by ride-hailing companies.  
-If instead we want to investigate more the yellow taxi we could analize how the citizen pay for the ride and if the zone where they are picking-up or dropping-off the taxi ha some relationship with the tips or the number of passenger.
+This was just a starting point of data exploration and visualization about private transportation in New York City.  
+This analysis could go further for example by analyzing the traffic generated by the green taxi and then by ride-sharing companies.  
+If instead, we want to investigate more the situation about the yellow taxi we could analyze how the citizen pay for the ride, or if there is some difference between morning trip or night trip, if the zone where they are picking-up or dropping-off the taxi has some relationship with the tips or with the number of passengers.
+
+© Ibrahim Al Hazwani
