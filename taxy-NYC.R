@@ -1,0 +1,1 @@
+# The script is inside the 'script' folder
